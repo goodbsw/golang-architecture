@@ -6,55 +6,56 @@ type person struct {
 	first string
 }
 
-type secreteAgent struct {
-	person
-	ltk bool
+type mongo map[int]person
+type postg map[int]person
+
+func (m mongo) save(n int, p person) {
+	m[n] = p
 }
 
-func (p person) speak() {
-	fmt.Println("from a person - this is my name", p.first)
+func (m mongo) retrieve(n int) person {
+	return m[n]
 }
 
-func (sa secreteAgent) speak() {
-	fmt.Println("I am a secrete agent - this is my name", sa.first)
+func (pg postg) save(n int, p person) {
+	pg[n] = p
 }
 
-// any TYPE that has the methods specified by an interface
-// is also the interface type
-// an interface says
-// "Hey baby, if you have these method, then you're my type"
-
-type human interface {
-	speak()
+func (pg postg) retrieve(n int) person {
+	return pg[n]
 }
 
-func foo(h human) {
-	h.speak()
+type accessor interface {
+	save(n int, p person)
+	retrieve(n int) person
+}
+
+func put(a accessor, n int, p person) {
+	a.save(n, p)
+}
+
+func get(a accessor, n int) person {
+	return a.retrieve(n)
 }
 
 func main() {
+	dbm := mongo{}
+	dbp := postg{}
+
 	p1 := person{
-		first: "Miss Moneypenny",
+		first: "Jimmy",
+	}
+	p2 := person{
+		first: "James",
 	}
 
-	sa1 := secreteAgent{
-		person: person{
-			first: "James",
-		},
-		ltk: true,
-	}
-	fmt.Printf("%T\n", p1)
+	put(dbm, 1, p1)
+	put(dbm, 2, p2)
+	fmt.Println(get(dbm, 1))
+	fmt.Println(get(dbm, 2))
 
-	// in Go, a VALUE can be of more than one TYPE
-	// in this example, p1 is both TYPE person and human
-	var x, y human
-	x = p1
-	y = sa1
-	x.speak()
-	y.speak()
-	fmt.Printf("--------")
-	foo(x)
-	foo(y)
-	foo(p1)
-	foo(sa1)
+	put(dbp, 1, p1)
+	put(dbp, 2, p2)
+	fmt.Println(get(dbp, 1))
+	fmt.Println(get(dbp, 2))
 }
